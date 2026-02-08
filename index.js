@@ -7,6 +7,7 @@ import dashboardRouter from './routes/dashboard.routes.js';
 import adminRouter from './routes/admin.routes.js';
 import teacherRouter from './routes/teacher.routes.js';
 import studentRouter from './routes/student.routes.js';
+import classRouter from './routes/class.routes.js';
 
 config()
 conncetDB()
@@ -22,6 +23,7 @@ app.use("/dashboard" , dashboardRouter)
 app.use("/admin" , adminRouter);
 app.use("/teacher" , teacherRouter)
 app.use("/student" , studentRouter)
+app.use("/class" , classRouter)
 
 //Home route this was just for testing
 app.get('/' , (req , res) => {
