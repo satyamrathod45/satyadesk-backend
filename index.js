@@ -5,6 +5,8 @@ import cookieParser from 'cookie-parser';
 import authRouter from './routes/auth.route.js';
 import dashboardRouter from './routes/dashboard.routes.js';
 import adminRouter from './routes/admin.routes.js';
+import teacherRouter from './routes/teacher.routes.js';
+import studentRouter from './routes/student.routes.js';
 
 config()
 conncetDB()
@@ -18,6 +20,8 @@ app.use(express.json());
 app.use("/auth" , authRouter)
 app.use("/dashboard" , dashboardRouter)
 app.use("/admin" , adminRouter);
+app.use("/teacher" , teacherRouter)
+app.use("/student" , studentRouter)
 
 //Home route this was just for testing
 app.get('/' , (req , res) => {
