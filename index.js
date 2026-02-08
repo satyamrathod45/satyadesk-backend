@@ -6,7 +6,6 @@ import authRouter from './routes/auth.route.js';
 import dashboardRouter from './routes/dashboard.routes.js';
 import adminRouter from './routes/admin.routes.js';
 
-
 config()
 conncetDB()
 const app = express()
