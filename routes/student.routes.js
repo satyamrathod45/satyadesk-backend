@@ -10,5 +10,4 @@ studentRouter.post(
   checkRole("student"),
   joinClass
 );
-
 export default studentRouter;

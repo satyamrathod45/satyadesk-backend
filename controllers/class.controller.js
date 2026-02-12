@@ -1,5 +1,6 @@
-
 import Class from "../models/class.model.js";
+import Lecture from "../models/lecture.model.js";
+import generateJoinCode from "../utils/generateJoinCode.js";
 
 export const getMyClasses = async (req, res) => {
   try {
@@ -91,6 +92,22 @@ export const createLecture = async (req, res) => {
       });
     }
 
+    const overlappingLecture = await Lecture.findOne({
+      classId,
+      $or: [
+        {
+          startTime: { $lt: end },
+          endTime: { $gt: start },
+        },
+      ],
+    });
+
+    if (overlappingLecture) {
+      return res.status(400).json({
+        message: "Lecture already exists for this time slot",
+      });
+    }
+
     const numberOfLectures = durationMs / ONE_HOUR_MS;
     const lecturesToCreate = [];
 
@@ -120,6 +137,92 @@ export const createLecture = async (req, res) => {
         attendanceCode: l.attendanceCode,
       })),
     });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Something went wrong",
+      error: error.message,
+    });
+  }
+};
+
+export const getAllLectures = async (req, res) => {
+  try {
+    const { classId } = req.params;
+    const { userId, role } = req.user;
+
+    const classDoc = await Class.findById(classId);
+
+    if (!classDoc) {
+      return res.status(404).json({
+        message: "Class not found",
+      });
+    }
+
+    if (role === "teacher") {
+      if (classDoc.teacherId.toString() !== userId) {
+        return res.status(403).json({
+          message: "Class does not belong to you",
+        });
+      }
+    }
+
+    if (role === "student") {
+      const isStudentEnrolled = classDoc.students.some(
+        (id) => id.toString() === userId,
+      );
+
+      if (!isStudentEnrolled) {
+        return res.status(403).json({
+          message: "You are not enrolled in this class",
+        });
+      }
+    }
+
+    const lectures = await Lecture.find({ classId }).sort({ startTime: 1 });
+
+    return res.status(200).json({
+      lectures,
+      count: lectures.length,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Something went wrong",
+      error: error.message,
+    });
+  }
+};
+
+export const deleteLecture = async (req, res) => {
+  try {
+    const { classId, lectureId } = req.params;
+    const teacherId = req.user.userId;
+
+    const classDoc = await Class.findOne({
+      _id: classId,
+      teacherId
+    });
+
+    if (!classDoc) {
+      return res.status(404).json({
+        message: "Class not found or unauthorized",
+      });
+    }
+
+    const deletedLecture = await Lecture.findOneAndDelete({
+      _id: lectureId,
+      classId,
+      teacherId,
+    });
+
+    if (!deletedLecture) {
+      return res.status(404).json({
+        message: "Lecture not found or unauthorized",
+      });
+    }
+    
+    return res.status(200).json({
+      message: "Lecture deleted successfully",
+    });
 
   } catch (error) {
     return res.status(500).json({
@@ -128,3 +231,4 @@ export const createLecture = async (req, res) => {
     });
   }
 };
+
