@@ -1,7 +1,12 @@
-import attendaceModel from "../models/attendace.model";
-import classModel from "../models/class.model";
-import lectureModel from "../models/lecture.model";
+import attendanceModel from '../models/attendace.model.js'
+import classModel from "../models/class.model.js";
+import lectureModel from "../models/lecture.model.js";
 
+const GRACE_PERIOD_MS = 2 * 60 * 1000; // 2 minutes
+
+/* =======================================================
+   🧑‍🎓 STUDENT MARK ATTENDANCE
+   ======================================================= */
 export const markAttendanceStudent = async (req, res) => {
   try {
     const { lectureId } = req.params;
@@ -22,9 +27,15 @@ export const markAttendanceStudent = async (req, res) => {
       });
     }
 
-    const classOfLecture = await classModel.findById(lecture.classId);
+    const classDoc = await classModel.findById(lecture.classId);
 
-    const isStudentEnrolled = classOfLecture.students.some(
+    if (!classDoc) {
+      return res.status(404).json({
+        message: "Class not found",
+      });
+    }
+
+    const isStudentEnrolled = classDoc.students.some(
       id => id.toString() === studentId
     );
 
@@ -35,7 +46,6 @@ export const markAttendanceStudent = async (req, res) => {
     }
 
     const now = Date.now();
-    const GRACE_PERIOD_MS = 2 * 60 * 1000;
 
     if (!lecture.isActive) {
       return res.status(400).json({
@@ -43,7 +53,7 @@ export const markAttendanceStudent = async (req, res) => {
       });
     }
 
-    if (now < lecture.startTime) {
+    if (now < lecture.startTime.getTime()) {
       return res.status(400).json({
         message: "Lecture has not started yet",
       });
@@ -60,7 +70,8 @@ export const markAttendanceStudent = async (req, res) => {
         message: "Invalid attendance code",
       });
     }
-    const attendance = await attendaceModel.findOneAndUpdate(
+
+    await attendanceModel.findOneAndUpdate(
       { lectureId, studentId },
       {
         status: "present",
@@ -71,6 +82,111 @@ export const markAttendanceStudent = async (req, res) => {
 
     return res.status(200).json({
       message: "Attendance marked successfully",
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      message: "Something went wrong",
+      error: error.message,
+    });
+  }
+};
+
+
+/* =======================================================
+   👨‍🏫 TEACHER MANUAL ATTENDANCE
+   ======================================================= */
+export const markAttendanceManually = async (req, res) => {
+  try {
+    const teacherId = req.user.userId;
+    const { lectureId } = req.params;
+    const { absentStudentIdArray = [] } = req.body;
+
+    const lecture = await lectureModel.findById(lectureId);
+
+    if (!lecture) {
+      return res.status(404).json({
+        message: "Lecture not found",
+      });
+    }
+
+    const classDoc = await classModel.findOne({
+      _id: lecture.classId,
+      teacherId,
+    });
+
+    if (!classDoc) {
+      return res.status(403).json({
+        message: "Unauthorized",
+      });
+    }
+
+    // Validate students
+    for (let studentId of absentStudentIdArray) {
+      const isEnrolled = classDoc.students.some(
+        id => id.toString() === studentId
+      );
+
+      if (!isEnrolled) {
+        return res.status(400).json({
+          message: "Invalid student in absent list",
+        });
+      }
+    }
+
+    // Bulk mark absentees
+    if (absentStudentIdArray.length > 0) {
+      const operations = absentStudentIdArray.map(studentId => ({
+        updateOne: {
+          filter: { lectureId, studentId },
+          update: {
+            status: "absent",
+            markedBy: "teacher",
+          },
+          upsert: true,
+        },
+      }));
+
+      await attendanceModel.bulkWrite(operations);
+    }
+
+    return res.status(200).json({
+      message: "Manual attendance marked successfully",
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      message: "Something went wrong",
+      error: error.message,
+    });
+  }
+};
+
+
+/* =======================================================
+   🔒 OPTIONAL: CLOSE LECTURE EARLY
+   ======================================================= */
+export const closeLecture = async (req, res) => {
+  try {
+    const { lectureId } = req.params;
+    const teacherId = req.user.userId;
+
+    const lecture = await lectureModel.findOne({
+      _id: lectureId,
+      teacherId,
+    });
+
+    if (!lecture) {
+      return res.status(404).json({
+        message: "Lecture not found or unauthorized",
+      });
+    }
+
+    lecture.isActive = false;
+    await lecture.save();
+
+    return res.status(200).json({
+      message: "Lecture closed successfully",
     });
 
   } catch (error) {
