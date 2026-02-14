@@ -2,11 +2,7 @@ import attendanceModel from '../models/attendace.model.js'
 import classModel from "../models/class.model.js";
 import lectureModel from "../models/lecture.model.js";
 
-const GRACE_PERIOD_MS = 2 * 60 * 1000; // 2 minutes
-
-/* =======================================================
-   🧑‍🎓 STUDENT MARK ATTENDANCE
-   ======================================================= */
+const GRACE_PERIOD_MS = 2 * 60 * 1000;
 export const markAttendanceStudent = async (req, res) => {
   try {
     const { lectureId } = req.params;
@@ -92,10 +88,6 @@ export const markAttendanceStudent = async (req, res) => {
   }
 };
 
-
-/* =======================================================
-   👨‍🏫 TEACHER MANUAL ATTENDANCE
-   ======================================================= */
 export const markAttendanceManually = async (req, res) => {
   try {
     const teacherId = req.user.userId;
@@ -162,10 +154,6 @@ export const markAttendanceManually = async (req, res) => {
   }
 };
 
-
-/* =======================================================
-   🔒 OPTIONAL: CLOSE LECTURE EARLY
-   ======================================================= */
 export const closeLecture = async (req, res) => {
   try {
     const { lectureId } = req.params;

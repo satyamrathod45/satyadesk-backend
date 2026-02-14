@@ -12,17 +12,22 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
       lowercase: true,
+      unique: true,
+      sparse: true,
     },
+
     applicationNumber: {
       type: String,
       unique: true,
       required: true,
+      trim: true,
     },
 
     phone: {
       type: String,
       required: true,
       unique: true,
+      trim: true,
     },
 
     passwordHash: {
@@ -36,10 +41,38 @@ const userSchema = new mongoose.Schema(
       required: true,
       default: "student",
     },
+
     mustChangePassword: {
       type: Boolean,
       default: true,
     },
+
+    rollNo: {
+      type: Number,
+      required: function () {
+        return this.role === "student";
+      },
+      unique: true,
+      sparse: true, 
+    },
+
+    studentBranch: {
+      type: String,
+      required: function () {
+        return this.role === "student";
+      },
+      trim: true,
+    },
+
+    teacherDepartment: {
+      type: String,
+      required: function () {
+        return this.role === "teacher";
+      },
+      trim: true,
+    },
+
+
     isActive: {
       type: Boolean,
       default: true,
@@ -47,7 +80,17 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  },
+  }
+);
+
+/* ===============================
+   Helpful Indexes
+   =============================== */
+
+// Prevent duplicate roll numbers among students
+userSchema.index(
+  { rollNo: 1 },
+  { unique: true, sparse: true }
 );
 
 const User = mongoose.model("User", userSchema);
