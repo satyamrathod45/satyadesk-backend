@@ -3,7 +3,15 @@ import bcrypt from "bcrypt";
 
 const createUser = async (req, res) => {
   try {
-    const { name, phone, applicationNumber, role } = req.body;
+    const {
+      name,
+      phone,
+      applicationNumber,
+      role,
+      branch,
+      rollNo,
+      teacherDepartment
+    } = req.body;
 
     if (!name || !phone || !applicationNumber || !role) {
       return res.status(400).json({
@@ -24,10 +32,7 @@ const createUser = async (req, res) => {
     }
 
     const existingUser = await User.findOne({
-      $or: [
-        { phone },
-        { applicationNumber },
-      ],
+      $or: [{ phone }, { applicationNumber }],
     });
 
     if (existingUser) {
@@ -38,14 +43,38 @@ const createUser = async (req, res) => {
 
     const passwordHash = await bcrypt.hash(process.env.TEMP_PASS, 10);
 
-    const newUser = await User.create({
+    let userData = {
       name,
       phone,
       applicationNumber,
       passwordHash,
       role,
       mustChangePassword: true,
-    });
+    };
+
+    if (role === "student") {
+
+      if (!branch || !rollNo) {
+        return res.status(400).json({
+          message: "Branch and roll number are required for students",
+        });
+      }
+
+      userData.studentBranch = branch;
+      userData.rollNo = `${branch}-${rollNo}`; // if you insist on combined format
+
+    } else if (role === "teacher") {
+
+      if (!teacherDepartment) {
+        return res.status(400).json({
+          message: "Teacher department is required",
+        });
+      }
+
+      userData.teacherDepartment = teacherDepartment;
+    }
+
+    const newUser = await User.create(userData);
 
     return res.status(201).json({
       message: "User created successfully",
@@ -54,11 +83,19 @@ const createUser = async (req, res) => {
     });
 
   } catch (error) {
+
+    if (error.code === 11000) {
+      return res.status(409).json({
+        message: "Duplicate roll number or unique field conflict",
+      });
+    }
+
     return res.status(500).json({
       message: "Failed to create user",
       error: error.message,
     });
   }
 };
+
 
 export { createUser };

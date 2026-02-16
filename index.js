@@ -9,7 +9,6 @@ import teacherRouter from './routes/teacher.routes.js';
 import studentRouter from './routes/student.routes.js';
 import classRouter from './routes/class.routes.js';
 import attendanceRouter from './routes/attendance.routes.js';
-import getAttendanceData from './utils/getAttendanceData.js';
 
 config()
 conncetDB()
@@ -28,9 +27,6 @@ app.use("/student" , studentRouter)
 app.use("/class" , classRouter)
 app.use("/attendance" , attendanceRouter)
 
-//test
-
-getAttendanceData("69888e8d22f483deb7aab83e")
 
 
 //Home route this was just for testing

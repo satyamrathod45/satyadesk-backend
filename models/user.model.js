@@ -48,7 +48,7 @@ const userSchema = new mongoose.Schema(
     },
 
     rollNo: {
-      type: Number,
+      type: String,
       required: function () {
         return this.role === "student";
       },
@@ -63,7 +63,6 @@ const userSchema = new mongoose.Schema(
       },
       trim: true,
     },
-
     teacherDepartment: {
       type: String,
       required: function () {
@@ -71,8 +70,6 @@ const userSchema = new mongoose.Schema(
       },
       trim: true,
     },
-
-
     isActive: {
       type: Boolean,
       default: true,
@@ -83,15 +80,6 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-/* ===============================
-   Helpful Indexes
-   =============================== */
-
-// Prevent duplicate roll numbers among students
-userSchema.index(
-  { rollNo: 1 },
-  { unique: true, sparse: true }
-);
 
 const User = mongoose.model("User", userSchema);
 
