@@ -1,4 +1,4 @@
-﻿#  Attendance Management System – Backend
+﻿#  Attendance Management System – Backend .
 
 A secure, role-based Attendance Management System built using **Node.js, Express, MongoDB, and JWT Authentication**.
 
@@ -390,4 +390,5 @@ ClassName-attendance.csv
 ## 🎯 Summary
 
 This backend provides a complete lecture-based attendance management system with secure role-based access, automated attendance logic, and exportable reporting. Ready for frontend integration and further enhancement.
+
 
